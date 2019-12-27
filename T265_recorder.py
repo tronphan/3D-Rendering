@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
                 if args.record_imgs:
                     if frame_count == 0:
-                        writer.writerow(["Frame count", "Position", "'Rotation", "Tracker confidence"])
+                        writer.writerow(["Frame count", "Pos x", "Pos y", "Pos z", "Rot x", "Rot y", "Rot z", "Rot w", "Tracker confidence"])
                         save_intrinsic_as_json(
                             join(args.output_folder, "camera_intrinsic.json"),
                             color_frame)
@@ -188,7 +188,8 @@ if __name__ == "__main__":
                     cv2.imwrite("%s/%06d.jpg" % \
                             (path_color, frame_count), color_image)
                     print("Saved color + depth image %06d" % frame_count)
-                    writer.writerow([str(frame_count), str(data.translation), str(data.rotation), str(data.tracker_confidence)])
+                    writer.writerow([frame_count, data.translation.x, data.translation.y, data.translation.z,
+                                                  data.rotation.x, data.rotation.y, data.rotation.z, data.rotation.w, data.tracker_confidence])
                     frame_count += 1
 
                 # Remove background - Set pixels further than clipping_distance to grey
