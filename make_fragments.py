@@ -57,7 +57,7 @@ def register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic,
             source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
             o3d.odometry.RGBDOdometryJacobianFromHybridTerm(), option)
         return [success, trans, info]
-
+        
 
 def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                                 depth_files, fragment_id, n_fragments,
