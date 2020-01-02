@@ -22,6 +22,6 @@ if __name__ == "__main__":
     print("Load a ply point cloud, print it, and render it")
     # pcd = o3d.io.read_point_cloud("../../TestData/fragment.ply")
     # pcd = o3d.io.read_point_cloud("dataset/realsense/scene/integrated.ply")
-    pcd = o3d.io.read_point_cloud("dataset/realsense/fragments/fragment_000.ply")
+    pcd = o3d.io.read_point_cloud("dataset/realsense/fragments/fragment_002.ply")
     draw_geometries_flip([pcd])
     # o3d.visualization.draw_geometries_flip([pcd])

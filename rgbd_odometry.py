@@ -13,7 +13,7 @@ def calc_transform(s_pose, t_pose):
     s_track_confidence = s_pose["Tracker confidence"]
     t_track_confidence = t_pose["Tracker confidence"]
 
-    if s_track_confidence >= 2 and t_track_confidence >= 2:
+    if s_track_confidence == 3 and t_track_confidence == 3:
         success = True
         q_x = t_pose["Rot x"] - s_pose["Rot x"]
         q_y = t_pose["Rot y"] - s_pose["Rot y"]
