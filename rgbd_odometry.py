@@ -13,7 +13,7 @@ def calc_transform(s_pose, t_pose):
     s_track_confidence = s_pose["Tracker confidence"]
     t_track_confidence = t_pose["Tracker confidence"]
 
-    if s_track_confidence == 3 and t_track_confidence == 3:
+    if s_track_confidence >= 2 and t_track_confidence >= 2:
         success = True
         q_x = t_pose["Rot x"] - s_pose["Rot x"]
         q_y = t_pose["Rot y"] - s_pose["Rot y"]
@@ -28,11 +28,11 @@ def calc_transform(s_pose, t_pose):
                                 [(2 * q_x*q_y + 2 * q_z*q_w),        1 - 2 * q_x*q_x - 2 * q_z*q_z,  (2 * q_y*q_z - 2 * q_x*q_w),       t_y],
                                 [(2 * q_x*q_z - 2 * q_y*q_w),        2 * q_y*q_z + 2 * q_x*q_w,      (1 - 2 * q_x*q_x - 2 * q_y*q_y),   t_z],
                                 [0,                                  0,                              0,                                  1  ]  ])
-        info = np.identity(4)
+        info = np.identity(6)
         return [success, trans, info]
 
     else:
-        return [False, np.identity(4), np.identity(4)]
+        return [False, np.identity(4), np.identity(6)]
 
 if __name__ == "__main__":    
     # pinhole_camera_intrinsic = o3d.io.read_pinhole_camera_intrinsic(

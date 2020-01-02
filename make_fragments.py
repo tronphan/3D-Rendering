@@ -65,7 +65,7 @@ def register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic,
 def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                                 depth_files, fragment_id, n_fragments,
                                 intrinsic, with_opencv, config):
-    pose_data = pd.read_csv(join(path_dataset,"dataset/realsense/camera_pose.csv"))
+    pose_data = pd.read_csv(join(path_dataset,"camera_pose.csv"))
 
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
     pose_graph = o3d.registration.PoseGraph()
