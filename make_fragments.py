@@ -14,6 +14,9 @@ from opencv import initialize_opencv
 sys.path.append(".")
 from optimize_posegraph import optimize_posegraph_for_fragment
 
+from rgbd_odometry import calc_transform
+import pandas as pd
+
 # check opencv python package
 with_opencv = initialize_opencv()
 if with_opencv:
@@ -62,6 +65,8 @@ def register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic,
 def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                                 depth_files, fragment_id, n_fragments,
                                 intrinsic, with_opencv, config):
+    pose_data = pd.read_csv(join(path_dataset,"dataset/realsense/camera_pose.csv"))
+
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
     pose_graph = o3d.registration.PoseGraph()
     trans_odometry = np.identity(4)
@@ -73,9 +78,10 @@ def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                 print(
                     "Fragment %03d / %03d :: RGBD matching between frame : %d and %d"
                     % (fragment_id, n_fragments - 1, s, t))
-                [success, trans,
-                 info] = register_one_rgbd_pair(s, t, color_files, depth_files,
-                                                intrinsic, with_opencv, config)
+                # [success, trans,
+                #  info] = register_one_rgbd_pair(s, t, color_files, depth_files,
+                #                                 intrinsic, with_opencv, config)
+                [success, trans, info] = calc_transform(pose_data.iloc[s], pose_data.iloc[t])
                 trans_odometry = np.dot(trans, trans_odometry)
                 trans_odometry_inv = np.linalg.inv(trans_odometry)
                 pose_graph.nodes.append(
@@ -93,9 +99,10 @@ def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                 print(
                     "Fragment %03d / %03d :: RGBD matching between frame : %d and %d"
                     % (fragment_id, n_fragments - 1, s, t))
-                [success, trans,
-                 info] = register_one_rgbd_pair(s, t, color_files, depth_files,
-                                                intrinsic, with_opencv, config)
+                # [success, trans,
+                #  info] = register_one_rgbd_pair(s, t, color_files, depth_files,
+                #                                 intrinsic, with_opencv, config)
+                [success, trans, info] = calc_transform(pose_data.iloc[s], pose_data.iloc[t])
                 if success:
                     pose_graph.edges.append(
                         o3d.registration.PoseGraphEdge(s - sid,
