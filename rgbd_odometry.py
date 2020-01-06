@@ -6,6 +6,7 @@
 
 import open3d as o3d
 import numpy as np
+import quaternion
 import pandas as pd
 import time
 
@@ -34,6 +35,28 @@ def calc_transform(s_pose, t_pose):
     else:
         return [False, np.identity(4), np.identity(6)]
 
+def compute_odometry(s_pose, t_pose):
+    s_track_confidence = s_pose["Tracker confidence"]
+    t_track_confidence = t_pose["Tracker confidence"]
+
+    if s_track_confidence == 3 and t_track_confidence == 3:
+        quatA = np.quaternion(s_pose["Rot w"],s_pose["Rot x"],s_pose["Rot y"],s_pose["Rot z"])
+        quatB = np.quaternion(t_pose["Rot w"],t_pose["Rot x"],t_pose["Rot y"],t_pose["Rot z"])
+        quatC = quatA*quatB.inverse()
+        trans = quaternion.as_rotation_matrix(quatC)
+
+        t_x = t_pose["Pos x"] - s_pose["Pos x"]
+        t_y = t_pose["Pos y"] - s_pose["Pos y"]
+        t_z = t_pose["Pos z"] - s_pose["Pos z"]
+        translation = np.array([[t_x, t_y, t_z]])
+
+        trans = np.concatenate((trans,translation.T), axis=1)
+        trans = np.concatenate((trans,np.array([[0,0,0,1]])), axis=0)
+        return [True, trans, np.identity(6)]
+
+    else:
+        return [False, np.identity(4), np.identity(6)]
+
 if __name__ == "__main__":    
     # pinhole_camera_intrinsic = o3d.io.read_pinhole_camera_intrinsic(
     #     "../../TestData/camera_primesense.json")
@@ -48,8 +71,8 @@ if __name__ == "__main__":
     pinhole_camera_intrinsic = o3d.io.read_pinhole_camera_intrinsic(
         "dataset/realsense/camera_intrinsic.json")
     print(pinhole_camera_intrinsic.intrinsic_matrix)
-    s = 44
-    t = 54
+    s = 300
+    t = 301
     source_color = o3d.io.read_image("dataset/realsense/color/000044.jpg")
     source_depth = o3d.io.read_image("dataset/realsense/depth/000044.png")
     target_color = o3d.io.read_image("dataset/realsense/color/000054.jpg")
@@ -82,7 +105,7 @@ if __name__ == "__main__":
 
     t2 = time.time()
     [success_T265, trans_T265,
-     info] = calc_transform(pose_data.iloc[s], pose_data.iloc[t])
+     info] = compute_odometry(pose_data.iloc[s], pose_data.iloc[t])
     t3 = time.time()
 
     if success_color_term:

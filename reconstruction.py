@@ -38,9 +38,9 @@ if __name__ == "__main__":
     # Hardcoding
     args.config = "config/realsense.json"
     args.make = True
-    args.register = False
-    args.refine = False
-    args.integrate = False
+    args.register = True
+    args.refine = True
+    args.integrate = True
     args.debug_mode = False
 
     if not args.make and \
