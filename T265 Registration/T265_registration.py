@@ -2,7 +2,10 @@
 # The MIT License (MIT)
 # See license file or visit www.open3d.org for details
 
-# examples/Python/Advanced/colored_pointcloud_registration.py
+# See original file in Open3D github: examples/Python/Advanced/colored_pointcloud_registration.py
+
+# This file shows the capabilities to have a first rough global alignement by using the pose data
+# obtained by an additional camera Intel T265 that is physically attached on top of a RGBD camera Intel D435.
 
 import os
 import sys
