@@ -4,9 +4,9 @@
 
 # examples/Python/Advanced/colored_pointcloud_registration.py
 import sys
-sys.path.append("../Reconstruction")
-sys.path.append("../Utility")
-sys.path.append("../config")
+# sys.path.append("../Reconstruction")
+# sys.path.append("../Utility")
+# sys.path.append("../../config")
 import numpy as np
 import copy
 import open3d as o3d
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     print(trans_rel)
     trans_test = np.identity(4)
     trans_test[:3,3] = trans_rel[:3,3]
-    flip = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
+    
     source.transform(flip)
     target.transform(flip)
     draw_registration_result_original_color(source.transform(trans_s), target.transform(trans_t), trans_test)
@@ -240,14 +240,3 @@ if __name__ == "__main__":
     draw_registration_result_original_color(source, target,
                                             result_icp.transformation)
     draw_registration_result(source, target,result_icp.transformation)
-
-
-    # print("Test")
-    # A = np.dot(np.linalg.inv(trans_rel),result_icp.transformation)
-    # print(A)
-    # print(trans_rel)
-    # print(result_icp.transformation)
-    # res = np.dot(trans_rel,A)
-    # print(res)
-    # draw_registration_result_original_color(source, target, res)
-
