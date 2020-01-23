@@ -3,7 +3,10 @@
 # See license file or visit www.open3d.org for details
 
 # examples/Python/Advanced/colored_pointcloud_registration.py
-
+import sys
+sys.path.append("../Reconstruction")
+sys.path.append("../Utility")
+sys.path.append("../config")
 import numpy as np
 import copy
 import open3d as o3d

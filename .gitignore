@@ -1,2 +1,3 @@
 dataset/
 3D_VSCode.code-workspace
+__pycache__/
