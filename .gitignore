@@ -1,4 +1,5 @@
-.vscode/
-__pycache__/
+/.vscode
+/__pycache__
 3D_VSCode.code-workspace
 dataset
+/.gitignore
