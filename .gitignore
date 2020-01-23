@@ -1,4 +1,4 @@
-dataset/
+.vscode
+__pycache__
 3D_VSCode.code-workspace
-__pycache__/
-.vscode/
+dataset
