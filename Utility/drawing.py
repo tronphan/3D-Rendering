@@ -8,8 +8,9 @@ import numpy as np
 import open3d as o3d
 
 import copy
-flip_transform = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
+
 def draw_geometries_flip(pcds):
+    flip_transform = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
     pcds_transform = []
     for pcd in pcds:
         pcd_temp = copy.deepcopy(pcd)
@@ -19,9 +20,8 @@ def draw_geometries_flip(pcds):
 
 if __name__ == "__main__":
 
-    print("Load a ply point cloud, print it, and render it")
-    # pcd = o3d.io.read_point_cloud("../../TestData/fragment.ply")
-    # pcd = o3d.io.read_point_cloud("dataset/realsense/scene/integrated.ply")
-    pcd = o3d.io.read_point_cloud("dataset/realsense/fragments/fragment_000.ply")
-    draw_geometries_flip([pcd])
-    # o3d.visualization.draw_geometries_flip([pcd])
+    print("Load a ply point cloud and render it")
+    pcd = o3d.io.read_point_cloud("dataset/realsense/scene/integrated.ply")
+    # pcd = o3d.io.read_point_cloud("dataset/realsense/fragments/fragment_000.ply")
+    # draw_geometries_flip([pcd])
+    o3d.visualization.draw_geometries_flip([pcd])
