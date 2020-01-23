@@ -15,6 +15,7 @@ import open3d as o3d
 from drawing import *
 
 def create_RGBD_point_cloud(file_number, config):
+    # Create point cloud from RGB + Depth files
     color = o3d.io.read_image(os.path.join(config["path_dataset"], "color/%06d.jpg" % file_number))
     depth = o3d.io.read_image(os.path.join(config["path_dataset"], "depth/%06d.png" % file_number))
     rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
@@ -24,6 +25,8 @@ def create_RGBD_point_cloud(file_number, config):
     return pcd
 
 def trans_from_pose(pose_data):
+    # Compute the transformation matrix from the T265 pose data: rotration + translation
+    # Check: https://github.com/IntelRealSense/librealsense/blob/master/doc/t265.md
     rot = o3d.geometry.get_rotation_matrix_from_quaternion(
         [pose_data["Rot w"],pose_data["Rot x"],pose_data["Rot y"],pose_data["Rot z"]])
     trans = np.identity(4)
