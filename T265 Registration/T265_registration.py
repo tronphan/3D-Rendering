@@ -16,6 +16,8 @@ import numpy as np
 import pandas as pd
 import open3d as o3d
 from drawing import *
+import quaternion
+import time
 
 def create_RGBD_point_cloud(file_number, config):
     # Create point cloud from RGB + Depth files
@@ -36,14 +38,28 @@ def trans_from_pose(pose_data):
     trans[:3,:3] = rot
     trans[:3,3] = [pose_data["Pos x"],pose_data["Pos y"],pose_data["Pos z"]]
     return trans
+
+def relative_trans(pose_source, pose_target):
+    # Compute the relative transformation matrix by using the pose data of the source and target
+    translation_source = np.array([pose_source["Pos x"],pose_source["Pos y"],pose_source["Pos z"]])
+    translation_target = np.array([pose_target["Pos x"],pose_target["Pos y"],pose_target["Pos z"]])
+    q = np.quaternion(pose_source["Rot w"],pose_source["Rot x"],pose_source["Rot y"],pose_source["Rot z"])
+    r = np.quaternion(pose_target["Rot w"],-pose_target["Rot x"],-pose_target["Rot y"],-pose_target["Rot z"])
+    p = r*q
+    rot = quaternion.as_rotation_matrix(p)
+    rel_trans = np.identity(4)
+    rel_trans[:3,:3] = rot
+    translation = np.dot(quaternion.as_rotation_matrix(r),np.subtract(translation_source, translation_target))
+    rel_trans[:3,3] = translation
+    return rel_trans
     
 if __name__ == "__main__":
     print("##############################################")
     print("1. Load two point clouds and show initial pose")
     print("##############################################")
     # Load RGBD file from intel D435
-    source_file_number = 1912
-    target_file_number = 1922
+    source_file_number = 600
+    target_file_number = 700
     with open("config/realsense.json") as json_file:
         config = json.load(json_file)
         initialize_config(config)
@@ -56,7 +72,7 @@ if __name__ == "__main__":
 
     print("Draw initial alignement")
     current_transformation = np.identity(4)
-    draw_registration_result_original_color(source, target, current_transformation)
+    draw_registration_result_original_color(target, source, current_transformation)
     draw_registration_result(source, target, current_transformation)
 
 
@@ -70,15 +86,31 @@ if __name__ == "__main__":
     pose_s = pose_data.iloc[source_file_number]
     pose_t = pose_data.iloc[target_file_number]
 
+    start1 = time.time()
     trans_source = trans_from_pose(pose_s)
     trans_target = trans_from_pose(pose_t)
-    print(trans_source)
-    print(trans_target)
+    rel_trans1 = np.dot(np.linalg.inv(trans_target),trans_source)
+    stop1 = time.time()
+    duration1 = stop1-start1
 
-    draw_registration_result_original_color(source.transform(trans_source), target.transform(trans_target), np.identity(4))
-    draw_registration_result(source, target, np.identity(4))
+    start2 = time.time()
+    rel_trans2 = relative_trans(pose_s, pose_t)
+    stop2 = time.time()
+    duration2 = stop2-start2
 
+    print(duration1)
+    print(duration2)
+    print(rel_trans1)
+    print(rel_trans2)
 
+    # draw_registration_result_original_color(source.transform(trans_source), target.transform(trans_target), np.identity(4))
+    # draw_registration_result(source, target, np.identity(4))
+
+    draw_registration_result_original_color(source, target, rel_trans2)
+    draw_registration_result(source, target, rel_trans2)
+    source.transform(rel_trans2)
+
+    
     print("\n")
     print("##############################################")
     print("3. Colored point cloud registration")
