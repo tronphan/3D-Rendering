@@ -13,9 +13,8 @@ from file import join, make_clean_folder, get_rgbd_file_lists
 from opencv import initialize_opencv
 sys.path.append(".")
 from optimize_posegraph import optimize_posegraph_for_fragment
-
-from rgbd_odometry import calc_transform, compute_odometry
 import pandas as pd
+import quaternion
 
 # check opencv python package
 with_opencv = initialize_opencv()
@@ -33,9 +32,23 @@ def read_rgbd_image(color_file, depth_file, convert_rgb_to_intensity, config):
         convert_rgb_to_intensity=convert_rgb_to_intensity)
     return rgbd_image
 
+def register_from_pose_data(pose_source, pose_target):
+    # Compute the relative transformation matrix by using the pose data of the source and target
+    translation_source = np.array([pose_source["Pos x"],pose_source["Pos y"],pose_source["Pos z"]])
+    translation_target = np.array([pose_target["Pos x"],pose_target["Pos y"],pose_target["Pos z"]])
+    q = np.quaternion(pose_source["Rot w"],pose_source["Rot x"],pose_source["Rot y"],pose_source["Rot z"])
+    r = np.quaternion(pose_target["Rot w"],-pose_target["Rot x"],-pose_target["Rot y"],-pose_target["Rot z"])
+    p = r*q
+    rot = quaternion.as_rotation_matrix(p)
+    rel_trans = np.identity(4)
+    rel_trans[:3,:3] = rot
+    translation = np.dot(quaternion.as_rotation_matrix(r),np.subtract(translation_source, translation_target))
+    rel_trans[:3,3] = translation
+    return rel_trans
+
 
 def register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic,
-                           with_opencv, config):
+                           with_opencv, config, pose_data):
     source_rgbd_image = read_rgbd_image(color_files[s], depth_files[s], True,
                                         config)
     target_rgbd_image = read_rgbd_image(color_files[t], depth_files[t], True,
@@ -43,34 +56,23 @@ def register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic,
 
     option = o3d.odometry.OdometryOption()
     option.max_depth_diff = config["max_depth_diff"]
-    if abs(s - t) is not 1:
-        if with_opencv:
-            success_5pt, odo_init = pose_estimation(source_rgbd_image,
-                                                    target_rgbd_image,
-                                                    intrinsic, False)
-            if success_5pt:
-                [success, trans, info] = o3d.odometry.compute_rgbd_odometry(
-                    source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
-                    o3d.odometry.RGBDOdometryJacobianFromHybridTerm(), option)
-                return [success, trans, info]
-        return [False, np.identity(4), np.identity(6)]
-    else:
-        odo_init = np.identity(4)
-        [success, trans, info] = o3d.odometry.compute_rgbd_odometry(
-            source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
-            o3d.odometry.RGBDOdometryJacobianFromHybridTerm(), option)
-        return [success, trans, info]
-        
+    odo_init = register_from_pose_data(pose_data.iloc[s], pose_data.iloc[t])
+    [success, trans, info] = o3d.odometry.compute_rgbd_odometry(
+        source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
+        o3d.odometry.RGBDOdometryJacobianFromHybridTerm(), option)
+    return [success, trans, info]
+
 
 def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                                 depth_files, fragment_id, n_fragments,
-                                intrinsic, with_opencv, config):
-    pose_data = pd.read_csv(join(path_dataset,"camera_pose.csv"))
-
+                                intrinsic, with_opencv, config,pose_data):
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
     pose_graph = o3d.registration.PoseGraph()
     trans_odometry = np.identity(4)
     pose_graph.nodes.append(o3d.registration.PoseGraphNode(trans_odometry))
+
+
+
     for s in range(sid, eid):
         for t in range(s + 1, eid):
             # odometry
@@ -78,8 +80,9 @@ def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                 print(
                     "Fragment %03d / %03d :: RGBD matching between frame : %d and %d"
                     % (fragment_id, n_fragments - 1, s, t))
-                # [success, trans, info] = register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic, with_opencv, config)
-                [success, trans, info] = compute_odometry(pose_data.iloc[s], pose_data.iloc[t])
+                [success, trans,
+                 info] = register_one_rgbd_pair(s, t, color_files, depth_files,
+                                                intrinsic, with_opencv, config, pose_data)
                 trans_odometry = np.dot(trans, trans_odometry)
                 trans_odometry_inv = np.linalg.inv(trans_odometry)
                 pose_graph.nodes.append(
@@ -97,8 +100,9 @@ def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                 print(
                     "Fragment %03d / %03d :: RGBD matching between frame : %d and %d"
                     % (fragment_id, n_fragments - 1, s, t))
-                # [success, trans, info] = register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic, with_opencv, config)
-                [success, trans, info] = calc_transform(pose_data.iloc[s], pose_data.iloc[t])
+                [success, trans,
+                 info] = register_one_rgbd_pair(s, t, color_files, depth_files,
+                                                intrinsic, with_opencv, config, pose_data)
                 if success:
                     pose_graph.edges.append(
                         o3d.registration.PoseGraphEdge(s - sid,
@@ -149,7 +153,7 @@ def make_pointcloud_for_fragment(path_dataset, color_files, depth_files,
 
 
 def process_single_fragment(fragment_id, color_files, depth_files, n_files,
-                            n_fragments, config):
+                            n_fragments, config, pose_data):
     if config["path_intrinsic"]:
         intrinsic = o3d.io.read_pinhole_camera_intrinsic(
             config["path_intrinsic"])
@@ -161,7 +165,7 @@ def process_single_fragment(fragment_id, color_files, depth_files, n_files,
 
     make_posegraph_for_fragment(config["path_dataset"], sid, eid, color_files,
                                 depth_files, fragment_id, n_fragments,
-                                intrinsic, with_opencv, config)
+                                intrinsic, with_opencv, config, pose_data)
     optimize_posegraph_for_fragment(config["path_dataset"], fragment_id, config)
     make_pointcloud_for_fragment(config["path_dataset"], color_files,
                                  depth_files, fragment_id, n_fragments,
@@ -176,15 +180,17 @@ def run(config):
     n_fragments = int(math.ceil(float(n_files) / \
             config['n_frames_per_fragment']))
 
+    pose_data = pd.read_csv(join(config["path_dataset"], "camera_pose.csv"))
+
     if config["python_multi_threading"]:
         from joblib import Parallel, delayed
         import multiprocessing
         import subprocess
         MAX_THREAD = min(multiprocessing.cpu_count(), n_fragments)
         Parallel(n_jobs=MAX_THREAD)(delayed(process_single_fragment)(
-            fragment_id, color_files, depth_files, n_files, n_fragments, config)
+            fragment_id, color_files, depth_files, n_files, n_fragments, config, pose_data)
                                     for fragment_id in range(n_fragments))
     else:
         for fragment_id in range(n_fragments):
             process_single_fragment(fragment_id, color_files, depth_files,
-                                    n_files, n_fragments, config)
+                                    n_files, n_fragments, config, pose_data)
