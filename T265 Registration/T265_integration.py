@@ -15,7 +15,7 @@ def get_pose_matrix(pose):
     rotation = quaternion.as_rotation_matrix(q)
     translation = np.array([pose["Pos x"], pose["Pos y"], pose["Pos z"]])
     pose_matrix = np.identity(4)
-    pose_matrix[:3,:3] = rotations
+    pose_matrix[:3,:3] = rotation
     pose_matrix[:3,3] = translation
     return pose_matrix
 
