@@ -17,13 +17,21 @@ def get_pose_matrix(pose):
     pose_matrix = np.identity(4)
     pose_matrix[:3,:3] = rotation
     pose_matrix[:3,3] = translation
-    return pose_matrix
+    flip = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]] 
+    return np.dot(pose_matrix, flip)
 
 def load_point_clouds(pcds, voxel_size=0.0):
     for pcd in pcds:
         pcd_down = pcd.voxel_down_sample(voxel_size=voxel_size)
         pcds.append(pcd_down)
     return pcds_down
+
+def create_RGBD(file_number, config):
+    color = o3d.io.read_image(os.path.join(config["path_dataset"], "color/%06d.jpg" % file_number))
+    depth = o3d.io.read_image(os.path.join(config["path_dataset"], "depth/%06d.png" % file_number))
+    rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
+        color,depth,depth_trunc=config["max_depth"],convert_rgb_to_intensity=False)
+    return rgbd_image
 
 if __name__ == "__main__":
     print("##############################################")
@@ -34,9 +42,9 @@ if __name__ == "__main__":
     with open("config/realsense.json") as json_file:
         config = json.load(json_file)
         initialize_config(config)
-    pcds = [create_RGBD_point_cloud(file_number,config) for file_number in pcds_file_number]
+    pcds = [create_RGBD_point_cloud(file_number, config) for file_number in pcds_file_number]
     flip = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]  
-    pcds = [pcd.transform(flip) for pcd in pcds]
+    # pcds = [pcd.transform(flip) for pcd in pcds]
 
     print("Draw initial alignement")
     o3d.visualization.draw_geometries(pcds)
@@ -71,29 +79,21 @@ if __name__ == "__main__":
     print("##############################################")
     print("4. Integrate several point cloud")
     print("##############################################")
-    camera_poses = read_trajectory("../../TestData/RGBD/odometry.log")
     volume = o3d.integration.ScalableTSDFVolume(
-        voxel_length=4.0 / (2*512.0),
+        voxel_length=0.003, #2.0 / 512.0,
         sdf_trunc=0.04,
         color_type=o3d.integration.TSDFVolumeColorType.RGB8)
-    for i in range(len(camera_poses)):
-        print("Integrate {:d}-th image into the volume.".format(i))
-        color = o3d.io.read_image(
-            "../../TestData/RGBD/color/{:05d}.jpg".format(i))
-        depth = o3d.io.read_image(
-            "../../TestData/RGBD/depth/{:05d}.png".format(i))
-        rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
-            color, depth, depth_trunc=4.0, convert_rgb_to_intensity=False)
+
+    for file_number in pcds_file_number:
+        rgbd = create_RGBD(file_number, config)
         volume.integrate(
-            rgbd,
-            o3d.camera.PinholeCameraIntrinsic(
-                o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault),
-            np.linalg.inv(camera_poses[i].pose))
+            rgbd, o3d.io.read_pinhole_camera_intrinsic(config["path_intrinsic"]),
+            get_pose_matrix(pose_data.iloc[file_number]))
 
     print("Extract a triangle mesh from the volume and visualize it.")
     mesh = volume.extract_triangle_mesh()
     mesh.compute_vertex_normals()
-    o3d.visualization.draw_geometries([mesh])
+    # o3d.visualization.draw_geometries([mesh])
 
     pcd = o3d.geometry.PointCloud()
     pcd.points = mesh.vertices
