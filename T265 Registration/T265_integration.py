@@ -38,13 +38,11 @@ if __name__ == "__main__":
     print("1. Load point clouds")
     print("##############################################")
     # Load RGBD file from intel D435
-    pcds_file_number = range(200, 220)
+    pcds_file_number = range(300, 320)
     with open("config/realsense.json") as json_file:
         config = json.load(json_file)
         initialize_config(config)
-    pcds = [create_RGBD_point_cloud(file_number, config) for file_number in pcds_file_number]
-    flip = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]  
-    # pcds = [pcd.transform(flip) for pcd in pcds]
+    pcds = [create_RGBD_point_cloud(file_number, config) for file_number in pcds_file_number] 
 
     print("Draw initial alignement")
     o3d.visualization.draw_geometries(pcds)
@@ -80,7 +78,7 @@ if __name__ == "__main__":
     print("4. Integrate several point cloud")
     print("##############################################")
     volume = o3d.integration.ScalableTSDFVolume(
-        voxel_length=0.003, #2.0 / 512.0,
+        voxel_length=0.002, #2.0 / 512.0,
         sdf_trunc=0.04,
         color_type=o3d.integration.TSDFVolumeColorType.RGB8)
 
@@ -88,7 +86,7 @@ if __name__ == "__main__":
         rgbd = create_RGBD(file_number, config)
         volume.integrate(
             rgbd, o3d.io.read_pinhole_camera_intrinsic(config["path_intrinsic"]),
-            get_pose_matrix(pose_data.iloc[file_number]))
+             np.linalg.inv(get_pose_matrix(pose_data.iloc[file_number])))
 
     print("Extract a triangle mesh from the volume and visualize it.")
     mesh = volume.extract_triangle_mesh()
