@@ -33,6 +33,32 @@ def create_RGBD(file_number, config):
         color,depth,depth_trunc=config["max_depth"],convert_rgb_to_intensity=False)
     return rgbd_image
 
+def register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic,
+                           with_opencv, config):
+    source_rgbd_image = read_rgbd_image(color_files[s], depth_files[s], True,
+                                        config)
+    target_rgbd_image = read_rgbd_image(color_files[t], depth_files[t], True,
+                                        config)
+    option = o3d.odometry.OdometryOption()
+    option.max_depth_diff = config["max_depth_diff"]
+    if abs(s - t) is not 1:
+        if with_opencv:
+            success_5pt, odo_init = pose_estimation(source_rgbd_image,
+                                                    target_rgbd_image,
+                                                    intrinsic, False)
+            if success_5pt:
+                [success, trans, info] = o3d.odometry.compute_rgbd_odometry(
+                    source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
+                    o3d.odometry.RGBDOdometryJacobianFromHybridTerm(), option)
+                return [success, trans, info]
+        return [False, np.identity(4), np.identity(6)]
+    else:
+        odo_init = np.identity(4)
+        [success, trans, info] = o3d.odometry.compute_rgbd_odometry(
+            source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
+            o3d.odometry.RGBDOdometryJacobianFromHybridTerm(), option)
+        return [success, trans, info]
+
 def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
                                 depth_files, fragment_id, n_fragments,
                                 intrinsic, with_opencv, config):
