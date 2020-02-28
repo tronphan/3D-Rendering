@@ -38,7 +38,7 @@ if __name__ == "__main__":
     print("1. Load point clouds")
     print("##############################################")
     # Load RGBD file from intel D435
-    pcds_file_number = range(300, 320)
+    pcds_file_number = range(160, 190)
     with open("config/realsense.json") as json_file:
         config = json.load(json_file)
         initialize_config(config)

@@ -58,8 +58,8 @@ if __name__ == "__main__":
     print("1. Load two point clouds and show initial pose")
     print("##############################################")
     # Load RGBD file from intel D435
-    source_file_number = 600
-    target_file_number = 700
+    source_file_number = 160
+    target_file_number = 190
     with open("config/realsense.json") as json_file:
         config = json.load(json_file)
         initialize_config(config)
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     draw_registration_result(source, target, rel_trans2)
     source.transform(rel_trans2)
 
-    
+    start3 = time.time()
     print("\n")
     print("##############################################")
     print("3. Colored point cloud registration")
@@ -146,6 +146,9 @@ if __name__ == "__main__":
         current_transformation = result_icp.transformation
         print(result_icp)
     print(result_icp.transformation)
+    stop3 = time.time()
+    duration3 = stop3-start3
+    print(duration3)
     draw_registration_result_original_color(source, target,
                                             result_icp.transformation)
     draw_registration_result(source, target,result_icp.transformation)
