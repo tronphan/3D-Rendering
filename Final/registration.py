@@ -53,8 +53,8 @@ if __name__ == "__main__":
     print("1. Load two point clouds and show initial pose")
     print("##############################################")
     # Load RGBD file from intel D435
-    source_file_number = 160
-    target_file_number = 260
+    source_file_number = 250
+    target_file_number = source_file_number+5
     with open("config/realsense.json") as json_file:
         config = json.load(json_file)
         initialize_config(config)
@@ -104,6 +104,21 @@ if __name__ == "__main__":
     # draw_registration_result_original_color(source, target,
     #                                         result_icp.transformation)
     # draw_registration_result(source, target,result_icp.transformation)
+
+
+    print("\n")
+    print("##############################################")
+    print("3. Make a combined point cloud")
+    print("##############################################")
+    pcds_file_number = [250,251,252]
+    pcds = [create_RGBD_point_cloud(file_number, config) for file_number in pcds_file_number] 
+    pcd_combined = o3d.geometry.PointCloud()
+    for point_id in range(len(pcds)):
+        # pcds[point_id].transform(pose_graph.nodes[point_id].pose)
+        pcd_combined += pcds[point_id]
+    source = pcd_combined.voxel_down_sample(voxel_size=0.003)
+    source.transform(flip)
+    # o3d.io.write_point_cloud("multiway_registration.pcd", pcd_combined_down)
 
 
     print("\n")

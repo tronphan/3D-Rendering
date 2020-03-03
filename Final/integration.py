@@ -107,6 +107,10 @@ def make_posegraph_for_fragment(path_dataset, sid, eid, color_files,
         join(path_dataset, config["template_fragment_posegraph"] % fragment_id),
         pose_graph)
 
+    def affine_registration(pcds, config):
+
+        return pcds
+
 if __name__ == "__main__":
     print("##############################################")
     print("1. Load point clouds")
@@ -130,12 +134,12 @@ if __name__ == "__main__":
     pcds = [pcds[i].transform(get_pose_matrix(pose_data.iloc[pcds_file_number[i]])) for i in range(len(pcds))]
     o3d.visualization.draw_geometries(pcds)
 
-    print("\n")
-    print("##############################################")
-    print("3. Affine Registration")
-    print("##############################################")
-
-    make_posegraph_for_fragment(path_dataset, sid, eid, color_files, depth_files, fragment_id, n_fragments, intrinsic, with_opencv, config)
+    # print("\n")
+    # print("##############################################")
+    # print("3. Affine Registration")
+    # print("##############################################")
+    # # pcds are roughly already alligned thanks to pose data
+    # pcds = affine_registration(pcds_file, config)
 
     # print("\n")
     # print("##############################################")
