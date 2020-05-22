@@ -110,8 +110,8 @@ if __name__ == "__main__":
             config_D435.enable_device(device.get_info(rs.camera_info.serial_number))
             # note: using 640 x 480 depth resolution produces smooth depth boundaries
             # using rs.format.bgr8 for color image format for OpenCV based image visualization
-            config_D435.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
-            config_D435.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+            config_D435.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+            config_D435.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30) #640, 480 or 1280, 720
             profile = pipeline_D435.start(config_D435)
             pipelines.append(pipeline_D435)
 
@@ -131,6 +131,23 @@ if __name__ == "__main__":
     # Start streaming
     depth_sensor = profile.get_device().first_depth_sensor()
 
+    laser_pwr = depth_sensor.get_option(rs.option.laser_power)
+    print("laser power = ", laser_pwr)
+    laser_range = depth_sensor.get_option_range(rs.option.laser_power)
+    print("laser power range = " , laser_range.min , "~", laser_range.max)
+    # set_laser = 0
+    # #just simply add 10 to test set function
+    # if laser_pwr + 10 > laser_range.max:
+    #     set_laser = laser_range.max
+    # else:
+    #     set_laser = laser_pwr + 10
+    depth_sensor.set_option(rs.option.laser_power, laser_range.max)
+    
+    color_sensor = profile.get_device().query_sensors()[1]
+    # color_sensor.set_option(rs.option.enable_auto_exposure, False)
+    depth_sensor.set_option(rs.option.visual_preset, Preset.HighAccuracy)
+
+
     # Using preset HighAccuracy for recording
     if args.record_rosbag or args.record_imgs:
         depth_sensor.set_option(rs.option.visual_preset, Preset.HighAccuracy)
@@ -140,7 +157,7 @@ if __name__ == "__main__":
 
     # We will not display the background of objects more than
     #  clipping_distance_in_meters meters away
-    clipping_distance_in_meters = 3  # 3 meter
+    clipping_distance_in_meters = 1.5  # 3 meter
     clipping_distance = clipping_distance_in_meters / depth_scale
 
     # Create an align object
@@ -204,7 +221,8 @@ if __name__ == "__main__":
                     cv2.convertScaleAbs(depth_image, alpha=0.09), cv2.COLORMAP_JET)
                 images = np.hstack((bg_removed, depth_colormap))
                 cv2.namedWindow('Recorder Realsense', cv2.WINDOW_AUTOSIZE)
-                cv2.imshow('Recorder Realsense', images)
+                # cv2.imshow('Recorder Realsense', images)
+                cv2.imshow('Recorder Realsense', bg_removed)
                 key = cv2.waitKey(1)
 
                 # if 'esc' button pressed, escape loop and exit program

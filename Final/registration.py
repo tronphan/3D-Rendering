@@ -19,7 +19,7 @@ def create_RGBD_point_cloud(file_number, config):
     color = o3d.io.read_image(os.path.join(config["path_dataset"], "color/%06d.jpg" % file_number))
     depth = o3d.io.read_image(os.path.join(config["path_dataset"], "depth/%06d.png" % file_number))
     rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
-        color,depth,depth_trunc=config["max_depth"],convert_rgb_to_intensity=False)
+        color,depth,depth_trunc=config["max_depth"],convert_rgb_to_intensity=False) # max_depth = 3
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image,
         o3d.io.read_pinhole_camera_intrinsic(config["path_intrinsic"]))
     return pcd
@@ -53,8 +53,8 @@ if __name__ == "__main__":
     print("1. Load two point clouds and show initial pose")
     print("##############################################")
     # Load RGBD file from intel D435
-    source_file_number = 250
-    target_file_number = source_file_number+5
+    source_file_number = 117
+    target_file_number = 247
     with open("config/realsense.json") as json_file:
         config = json.load(json_file)
         initialize_config(config)
@@ -106,19 +106,19 @@ if __name__ == "__main__":
     # draw_registration_result(source, target,result_icp.transformation)
 
 
-    print("\n")
-    print("##############################################")
-    print("3. Make a combined point cloud")
-    print("##############################################")
-    pcds_file_number = [250,251,252]
-    pcds = [create_RGBD_point_cloud(file_number, config) for file_number in pcds_file_number] 
-    pcd_combined = o3d.geometry.PointCloud()
-    for point_id in range(len(pcds)):
-        # pcds[point_id].transform(pose_graph.nodes[point_id].pose)
-        pcd_combined += pcds[point_id]
-    source = pcd_combined.voxel_down_sample(voxel_size=0.003)
-    source.transform(flip)
-    # o3d.io.write_point_cloud("multiway_registration.pcd", pcd_combined_down)
+    # print("\n")
+    # print("##############################################")
+    # print("3. Make a combined point cloud")
+    # print("##############################################")
+    # pcds_file_number = [10,20,30,40]
+    # pcds = [create_RGBD_point_cloud(file_number, config) for file_number in pcds_file_number] 
+    # pcd_combined = o3d.geometry.PointCloud()
+    # for point_id in range(len(pcds)):
+    #     # pcds[point_id].transform(pose_graph.nodes[point_id].pose)
+    #     pcd_combined += pcds[point_id]
+    # source = pcd_combined.voxel_down_sample(voxel_size=0.003)
+    # source.transform(flip)
+    # # o3d.io.write_point_cloud("multiway_registration.pcd", pcd_combined_down)
 
 
     print("\n")
@@ -128,10 +128,10 @@ if __name__ == "__main__":
     # This is implementation of following paper
     # J. Park, Q.-Y. Zhou, V. Koltun,
     # Colored Point Cloud Registration Revisited, ICCV 2017
-    voxel_radius = [0.04, 0.02, 0.01]
-    max_iter = [50, 30, 14]
+    voxel_radius = [0.01]
+    max_iter = [50]
     current_transformation = rel_trans
-    for scale in range(3):
+    for scale in range(len(voxel_radius)):
         iter = max_iter[scale]
         radius = voxel_radius[scale]
         print([iter, radius, scale])

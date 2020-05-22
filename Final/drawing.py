@@ -18,12 +18,14 @@ def draw_geometries_flip(pcds):
         pcds_transform.append(pcd_temp)
     o3d.visualization.draw_geometries(pcds_transform)
 
-def draw_registration_result_original_color(source, target, transformation):
+def draw_registration_result_original_color(source, target, transformation=np.identity(4)):
+    # if transformation == None: transformation = np.identity(4)
     source_temp = copy.deepcopy(source)
     source_temp.transform(transformation)
     o3d.visualization.draw_geometries([source_temp, target])
 
-def draw_registration_result(source, target, transformation):
+def draw_registration_result(source, target, transformation=np.identity(4)):
+    # if transformation == None: transformation = 
     source_temp = copy.deepcopy(source)
     target_temp = copy.deepcopy(target)
     source_temp.paint_uniform_color([1, 0.706, 0])

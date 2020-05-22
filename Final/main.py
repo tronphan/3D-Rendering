@@ -51,8 +51,7 @@ if __name__ == "__main__":
     print("3. Make a combined point cloud")
     print("##############################################")
     start = 0
-    stop = start+500
-    step = 10 # genius idea
+    stop = start+20
 
     rgbd = read_rgbd_image(color_files[start], depth_files[start], config)
     pcd = create_RGBD_point_cloud(rgbd, config)
@@ -72,7 +71,7 @@ if __name__ == "__main__":
 
     volume.integrate(rgbd, intrinsic, np.linalg.inv(get_pose_matrix(pose_data.iloc[start])))
 
-    for i in range(start+1, stop, step):
+    for i in range(start+1, stop):
         print("File %d combined" %(i))
         rgbd = read_rgbd_image(color_files[i], depth_files[i], config)
         pcd = create_RGBD_point_cloud(rgbd, config)
