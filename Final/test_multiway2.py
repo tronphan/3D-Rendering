@@ -203,3 +203,4 @@ if __name__ == "__main__":
     final_pcd.points = mesh.vertices
     final_pcd.colors = mesh.vertex_colors
     o3d.visualization.draw_geometries([final_pcd])
+    
